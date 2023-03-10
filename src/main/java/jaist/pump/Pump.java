@@ -1,4 +1,4 @@
-package jaist.iotdb.tests;
+package jaist.pump;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,12 +24,11 @@ import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
  *
  * @author smarios <smarios@jaist.ac.jp>
  */
-public class IotdbTests implements MqttCallback {
+public class Pump implements MqttCallback {
 
     static final String DBHOST = "127.0.0.1";
     static final int DBPORT = 6667;
     static final String DBNAME = "root.devdb";
-    static final String TSNAME = "root.devdb.loc1.src2.temperature";
 
     static final String MQTTSERVER = "tcp://150.65.179.250";
     static final String[] MQTTTOPICS = {
@@ -48,13 +47,13 @@ public class IotdbTests implements MqttCallback {
     public static void main(String[] args) throws IoTDBConnectionException, StatementExecutionException, MqttException {
         System.out.println("Hello World!");
 
-        IotdbTests tests = new IotdbTests();
-        tests.init();
-        tests.mainloop();
+        Pump pump = new Pump();
+        pump.init();
+        pump.mainloop();
 
     }
 
-    public IotdbTests() {
+    public Pump() {
         this.messages = Collections.synchronizedList(new ArrayList<>());
         this.conversions = Map.ofEntries(
             entry("temperature", DataConvertor.Float()),
@@ -103,7 +102,7 @@ public class IotdbTests implements MqttCallback {
                 try {
                     messages.wait();
                 } catch (InterruptedException ex) {
-                    Logger.getLogger(IotdbTests.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(Pump.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             //we have a message here, deque it
@@ -136,9 +135,9 @@ public class IotdbTests implements MqttCallback {
             dbsession.insertRecord(tsval.getPrefix(), date.getTime(), measurements, types, values);
             System.out.println("Posted in: " + tsval.timeseries + " value: " + values.get(0));
         } catch (IoTDBConnectionException ex) {
-            Logger.getLogger(IotdbTests.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Pump.class.getName()).log(Level.SEVERE, null, ex);
         } catch (StatementExecutionException ex) {
-            Logger.getLogger(IotdbTests.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Pump.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

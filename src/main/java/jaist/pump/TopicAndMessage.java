@@ -1,5 +1,5 @@
 
-package jaist.iotdb.tests;
+package jaist.pump;
 
 import org.eclipse.paho.mqttv5.common.MqttMessage;
 

@@ -1,4 +1,4 @@
-package jaist.iotdb.tests;
+package jaist.pump;
 
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 import org.apache.iotdb.tsfile.utils.TsPrimitiveType;

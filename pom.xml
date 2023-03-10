@@ -2,8 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>jaist</groupId>
-    <artifactId>iotdb-tests</artifactId>
+    <artifactId>iot-pump</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <name>IoT Pump</name>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
@@ -39,6 +40,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <exec.mainClass>jaist.iotdb.tests.IotdbTests</exec.mainClass>
+        <exec.mainClass>jaist.pump.Pump</exec.mainClass>
     </properties>
 </project>
