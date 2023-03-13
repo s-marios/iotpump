@@ -4,7 +4,6 @@
  */
 package jaist.pump;
 
-import jaist.pump.TimeSeriesAndValue;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 import org.apache.iotdb.tsfile.utils.Binary;
 import org.junit.jupiter.api.AfterEach;

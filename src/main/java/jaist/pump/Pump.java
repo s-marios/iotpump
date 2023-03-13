@@ -1,11 +1,14 @@
 package jaist.pump;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import static java.util.Map.entry;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
@@ -26,34 +29,114 @@ import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
  */
 public class Pump implements MqttCallback {
 
-    static final String DBHOST = "127.0.0.1";
-    static final int DBPORT = 6667;
-    static final String DBNAME = "root.devdb";
+    static final String DBHOST_KEY = "DBHOST";
+    static final String DBPORT_KEY = "DBPORT";
+    static final String DBNAME_KEY = "DBNAME";
 
-    static final String MQTTSERVER = "tcp://150.65.179.250";
-    static final String[] MQTTTOPICS = {
-        "/+/+/CO2",
-        "/+/+/temperature",
-        "/+/+/humidity"
-    };
+    static final String MQTTSERVER_KEY = "MQTTSERVER";
+    static final String MQTTPORT_KEY = "MQTTPORT";
+    static final String MQTTTOPICS_KEY = "MQTTTOPICS";
 
     private Session dbsession;
     private MqttClient mqttclient;
 
     private final List<TopicAndMessage> messages;
-
     private final Map<String, DataConvertor> conversions;
 
-    public static void main(String[] args) throws IoTDBConnectionException, StatementExecutionException, MqttException {
-        System.out.println("Hello World!");
+    final String dbhost;
+    final int dbport;
+    final String dbname;
+    final String mqttServerUri;
+    final int mqttport;
+    String[] topics;
 
-        Pump pump = new Pump();
-        pump.init();
-        pump.mainloop();
+    public static class Builder {
 
+        private String dbname = "root.devdb";
+        private String dbhost = "127.0.0.1";
+        private int dbport = 6667;
+        private String mqttServerUri = "tcp://localhost";
+        private int mqttPort = 1883;
+        private String topics = "/+/+/CO2, /+/+/temperature, /+/+/humidity";
+
+        public Builder() {
+        }
+
+        public Builder dbname(String dbname) {
+            this.dbname = dbname;
+            return this;
+        }
+
+        public Builder dbhost(String host) {
+            this.dbhost = host;
+            return this;
+        }
+
+        public Builder dbport(int port) {
+            this.dbport = port;
+            return this;
+        }
+
+        public Builder mqttServerUri(String serverUri) {
+            this.mqttServerUri = serverUri;
+            return this;
+        }
+
+        public Builder mqttPort(int port) {
+            this.mqttPort = port;
+            return this;
+        }
+
+        public Builder topics(String topics) {
+            this.topics = topics;
+            return this;
+        }
+
+        public Pump build() {
+            //this is horrible, the use of java arrays
+            //when comming from rust it'd be
+            //topics.split.map(strip).collect() and go to town
+            String[] splits = topics.split(", ");
+            String[] scrubbed_topics = new String[splits.length];
+            for (int i = 0; i<splits.length; i++) {
+                scrubbed_topics[i] = splits[i].strip();
+            }
+
+            return new Pump(dbhost, dbport, dbname, mqttServerUri, mqttPort, scrubbed_topics);
+        }
+
+        public Pump fromProperties(Properties properties) {
+
+            this.dbhost(properties.getProperty(DBHOST_KEY, dbhost));
+            this.dbname(properties.getProperty(DBNAME_KEY, dbname));
+
+            this.mqttServerUri(properties.getProperty(MQTTSERVER_KEY, mqttServerUri));
+            this.topics(properties.getProperty(MQTTTOPICS_KEY, topics));
+
+            try {
+                this.dbport(Integer.parseInt(properties.getProperty(DBPORT_KEY)));
+            } catch (NumberFormatException | NullPointerException ex) {
+                Logger.getLogger(Builder.class.getName()).log(Level.WARNING, "malformed or non-existing configuration: DBPORT", ex);
+            }
+
+            try {
+                this.mqttPort(Integer.parseInt(properties.getProperty(MQTTPORT_KEY)));
+            } catch (NumberFormatException | NullPointerException ex) {
+                Logger.getLogger(Builder.class.getName()).log(Level.WARNING, "malformed or non-existing configuration: MQTTPORT", ex);
+            }
+
+            return this.build();
+        }
     }
 
-    public Pump() {
+    public Pump(String dbhost, int dbport, String dbname, String mqttServerUri, int mqttPort, String[] topics) {
+        this.dbhost = dbhost;
+        this.dbport = dbport;
+        this.dbname = dbname;
+        this.mqttServerUri = mqttServerUri;
+        this.mqttport = mqttPort;
+        this.topics = topics;
+
         this.messages = Collections.synchronizedList(new ArrayList<>());
         this.conversions = Map.ofEntries(
             entry("temperature", DataConvertor.Float()),
@@ -62,24 +145,52 @@ public class Pump implements MqttCallback {
         );
     }
 
+    Pump() {
+        //we just pass defaults to the full constructor
+        this(
+            "127.0.0.1",
+            6667,
+            "root.devdb",
+            "tcp://127.0.0.1",
+            1883,
+            new String[]{
+                "/+/+/CO2",
+                "/+/+/temperature",
+                "/+/+/humidity"
+            });
+    }
+
+    public static void main(String[] args) throws IoTDBConnectionException, StatementExecutionException, MqttException, IOException {
+        System.out.println("Starting IoT Pump!");
+
+        Properties properties = new Properties();
+        properties.load(new FileInputStream("config.properties"));
+        Pump pump = new Pump.Builder().fromProperties(properties);
+        pump.init();
+
+        pump.mainloop();
+    }
+
     public void init() throws IoTDBConnectionException, MqttException, StatementExecutionException {
         connectToIotDb();
         startMqttClient();
     }
 
     private void connectToIotDb() throws IoTDBConnectionException, StatementExecutionException {
+
         dbsession = new Session.Builder()
-            .host(DBHOST)
-            .port(DBPORT)
+            .host(this.dbhost)
+            .port(this.dbport)
             .build();
         dbsession.open();
     }
 
     private void startMqttClient() throws MqttException {
-        mqttclient = new MqttClient(MQTTSERVER, "7777");
+
+        mqttclient = new MqttClient(this.mqttServerUri, "iotpump-persistence");
         mqttclient.setCallback(this);
         mqttclient.connect();
-        for (String topic : MQTTTOPICS) {
+        for (String topic : topics) {
             mqttclient.subscribe(topic, 0);
         }
     }
@@ -119,7 +230,7 @@ public class Pump implements MqttCallback {
     }
 
     private String convertTopicToTimeseries(String topic) {
-        return DBNAME + topic.replace('/', '.');
+        return this.dbname + topic.replace('/', '.');
     }
 
     private String getTopicSuffix(String mqtttopic) {
@@ -179,26 +290,4 @@ public class Pump implements MqttCallback {
     public void authPacketArrived(int reasonCode, MqttProperties properties) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-//    private void doDbTest() throws StatementExecutionException, IoTDBConnectionException {
-//        try (Session session = new Session.Builder()
-//            .host(DBHOST)
-//            .port(DBPORT)
-//            .build()) {
-//            session.open();
-//
-//            //if (TODO check if database exists, or try to create it and fail, that's good too) {
-//            //    session.setStorageGroup(DBNAME);
-//            //}
-//            if (!session.checkTimeseriesExists(TSNAME)) {
-//                session.createTimeseries(TSNAME, TSDataType.FLOAT, TSEncoding.PLAIN, CompressionType.UNCOMPRESSED);
-//            }
-//
-//            //let's put something in there!
-//            List<String> measurements = new ArrayList<>(List.of("temperature"));
-//            List<TSDataType> types = new ArrayList<>(List.of(TSDataType.FLOAT));
-//            List<Object> values = new ArrayList<>(List.of(33.3f));
-//            Date date = new Date();
-//            session.insertRecord(DEVICENAME, date.getTime(), measurements, types, values);
-//        }
-//    }
 }
