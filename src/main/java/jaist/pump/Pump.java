@@ -18,6 +18,8 @@ import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
 import org.eclipse.paho.mqttv5.client.MqttCallback;
 import org.eclipse.paho.mqttv5.client.MqttClient;
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptionsBuilder;
 import org.eclipse.paho.mqttv5.client.MqttDisconnectResponse;
 import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
@@ -98,7 +100,7 @@ public class Pump implements MqttCallback {
             //topics.split.map(strip).collect() and go to town
             String[] splits = topics.split(", ");
             String[] scrubbed_topics = new String[splits.length];
-            for (int i = 0; i<splits.length; i++) {
+            for (int i = 0; i < splits.length; i++) {
                 scrubbed_topics[i] = splits[i].strip();
             }
 
@@ -189,7 +191,14 @@ public class Pump implements MqttCallback {
 
         mqttclient = new MqttClient(this.mqttServerUri, "iotpump-persistence");
         mqttclient.setCallback(this);
-        mqttclient.connect();
+
+        MqttConnectionOptions options = new MqttConnectionOptionsBuilder()
+            .cleanStart(true)
+            .automaticReconnect(true)
+            .build();
+
+        mqttclient.connect(options);
+
         for (String topic : topics) {
             mqttclient.subscribe(topic, 0);
         }
