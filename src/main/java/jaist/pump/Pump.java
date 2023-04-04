@@ -34,6 +34,8 @@ public class Pump implements MqttCallback {
     static final String DBHOST_KEY = "DBHOST";
     static final String DBPORT_KEY = "DBPORT";
     static final String DBNAME_KEY = "DBNAME";
+    static final String DBUSERNAME_KEY = "DBUSERNAME";
+    static final String DBPASSWORD_KEY = "DBPASSWORD";
 
     static final String MQTTSERVER_KEY = "MQTTSERVER";
     static final String MQTTPORT_KEY = "MQTTPORT";
@@ -51,12 +53,16 @@ public class Pump implements MqttCallback {
     final String mqttServerUri;
     final int mqttport;
     String[] topics;
+    private final String dbusername;
+    private final String dbpassword;
 
     public static class Builder {
 
         private String dbname = "root.devdb";
         private String dbhost = "127.0.0.1";
         private int dbport = 6667;
+        private String dbusername = "root";
+        private String dbpassword = "root";
         private String mqttServerUri = "tcp://localhost";
         private int mqttPort = 1883;
         private String topics = "/+/+/CO2, /+/+/temperature, /+/+/humidity";
@@ -76,6 +82,16 @@ public class Pump implements MqttCallback {
 
         public Builder dbport(int port) {
             this.dbport = port;
+            return this;
+        }
+
+        public Builder dbusername(String username) {
+            this.dbusername = username;
+            return this;
+        }
+
+        public Builder dbpassword(String password) {
+            this.dbpassword = password;
             return this;
         }
 
@@ -104,13 +120,15 @@ public class Pump implements MqttCallback {
                 scrubbed_topics[i] = splits[i].strip();
             }
 
-            return new Pump(dbhost, dbport, dbname, mqttServerUri, mqttPort, scrubbed_topics);
+            return new Pump(dbhost, dbport, dbusername, dbpassword, dbname, mqttServerUri, mqttPort, scrubbed_topics);
         }
 
         public Pump fromProperties(Properties properties) {
 
             this.dbhost(properties.getProperty(DBHOST_KEY, dbhost));
             this.dbname(properties.getProperty(DBNAME_KEY, dbname));
+            this.dbusername(properties.getProperty(DBUSERNAME_KEY, dbusername));
+            this.dbpassword(properties.getProperty(DBPASSWORD_KEY, dbpassword));
 
             this.mqttServerUri(properties.getProperty(MQTTSERVER_KEY, mqttServerUri));
             this.topics(properties.getProperty(MQTTTOPICS_KEY, topics));
@@ -131,9 +149,11 @@ public class Pump implements MqttCallback {
         }
     }
 
-    public Pump(String dbhost, int dbport, String dbname, String mqttServerUri, int mqttPort, String[] topics) {
+    public Pump(String dbhost, int dbport, String dbusername, String dbpassword, String dbname, String mqttServerUri, int mqttPort, String[] topics) {
         this.dbhost = dbhost;
         this.dbport = dbport;
+        this.dbusername = dbusername;
+        this.dbpassword = dbpassword;
         this.dbname = dbname;
         this.mqttServerUri = mqttServerUri;
         this.mqttport = mqttPort;
@@ -149,9 +169,12 @@ public class Pump implements MqttCallback {
 
     Pump() {
         //we just pass defaults to the full constructor
+        //only for testing
         this(
             "127.0.0.1",
             6667,
+            "root",
+            "root",
             "root.devdb",
             "tcp://127.0.0.1",
             1883,
@@ -183,6 +206,8 @@ public class Pump implements MqttCallback {
         dbsession = new Session.Builder()
             .host(this.dbhost)
             .port(this.dbport)
+            .username(this.dbusername)
+            .password(this.dbpassword)
             .build();
         dbsession.open();
     }
