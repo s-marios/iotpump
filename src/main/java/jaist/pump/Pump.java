@@ -224,9 +224,6 @@ public class Pump implements MqttCallback {
 
         mqttclient.connect(options);
 
-        for (String topic : topics) {
-            mqttclient.subscribe(topic, 0);
-        }
     }
 
     private void mainloop() {
@@ -293,6 +290,18 @@ public class Pump implements MqttCallback {
         }
     }
 
+    private void subscribeToTopics() {
+        for (String topic : topics) {
+            try {
+                mqttclient.subscribe(topic, 0);
+            } catch (MqttException ex) {
+                //if we fail to subscribe, catch fire and die
+                Logger.getLogger(Pump.class.getName()).log(Level.SEVERE, null, ex);
+                System.exit(-1);
+            }
+        }
+    }
+
     @Override
     public void messageArrived(String topic, MqttMessage message) throws Exception {
         System.out.println("received message: " + message.toString() + " in topic: " + topic);
@@ -318,6 +327,7 @@ public class Pump implements MqttCallback {
     @Override
     public void connectComplete(boolean reconnect, String serverURI) {
         System.out.println("Connected to MQTT server");
+        subscribeToTopics();
     }
 
     @Override
