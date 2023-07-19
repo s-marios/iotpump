@@ -1,4 +1,5 @@
 package jaist.pump;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -25,7 +26,7 @@ public class PumpTest {
             props.load(new FileInputStream("config_example.properties"));
             assertEquals("6667", props.getProperty("DBPORT"));
             assertEquals("tcp://127.0.0.1", props.getProperty("MQTTSERVER"));
-            assertEquals("/+/+/CO2, /+/+/temperature,  /+/+/humidity", props.getProperty("MQTTTOPICS"));
+            assertEquals(Pump.default_topics, props.getProperty("MQTTTOPICS"));
         } catch (IOException ex) {
             Logger.getLogger(PumpTest.class.getName()).log(Level.SEVERE, null, ex);
             fail();
@@ -44,8 +45,9 @@ public class PumpTest {
         assertEquals("tcp://127.0.0.1", pump.mqttServerUri);
         assertEquals(1883, pump.mqttport);
 
-        String[] expectedTopics = new String[]{
-            "/+/+/CO2", "/+/+/temperature", "/+/+/humidity"};
+        String[] expectedTopics = Pump.default_topics.split(",");
+
+        assertEquals(expectedTopics.length, pump.topics.length);
 
         for (int i = 0; i < pump.topics.length; i++) {
             assertEquals(expectedTopics[i], pump.topics[i]);

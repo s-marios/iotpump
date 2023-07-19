@@ -56,6 +56,20 @@ public class Pump implements MqttCallback {
     private final String dbusername;
     private final String dbpassword;
 
+    public static String default_topics = String.join(",",
+            "/+/+/CO2",
+            "/+/+/temperature",
+            "/+/+/humidity",
+            "/+/+/VOC",
+            "/+/+/NOx",
+            "/+/+/PM1",
+            "/+/+/PM2.5",
+            "/+/+/PM4",
+            "/+/+/PM10",
+            "/+/+/lux",
+            "/+/+/presence",
+            "/+/+/button");
+
     public static class Builder {
 
         private String dbname = "root.devdb";
@@ -65,7 +79,7 @@ public class Pump implements MqttCallback {
         private String dbpassword = "root";
         private String mqttServerUri = "tcp://localhost";
         private int mqttPort = 1883;
-        private String topics = "/+/+/CO2, /+/+/temperature, /+/+/humidity";
+        private String topics = default_topics;
 
         public Builder() {
         }
@@ -114,7 +128,7 @@ public class Pump implements MqttCallback {
             //this is horrible, the use of java arrays
             //when comming from rust it'd be
             //topics.split.map(strip).collect() and go to town
-            String[] splits = topics.split(", ");
+            String[] splits = topics.split(",");
             String[] scrubbed_topics = new String[splits.length];
             for (int i = 0; i < splits.length; i++) {
                 scrubbed_topics[i] = splits[i].strip();
@@ -161,28 +175,19 @@ public class Pump implements MqttCallback {
 
         this.messages = Collections.synchronizedList(new ArrayList<>());
         this.conversions = Map.ofEntries(
-            entry("temperature", DataConvertor.Float()),
-            entry("humidity", DataConvertor.Float()),
-            entry("co2", DataConvertor.Float())
+                entry("temperature", DataConvertor.Float()),
+                entry("humidity", DataConvertor.Float()),
+                entry("co2", DataConvertor.Float()),
+                entry("voc", DataConvertor.Float()),
+                entry("nox", DataConvertor.Float()),
+                entry("pm1", DataConvertor.Float()),
+                entry("pm2.5", DataConvertor.Float()),
+                entry("pm4", DataConvertor.Float()),
+                entry("pm10", DataConvertor.Float()),
+                entry("lux", DataConvertor.Float()),
+                entry("presence", DataConvertor.Int32()),
+                entry("button", DataConvertor.Int32())
         );
-    }
-
-    Pump() {
-        //we just pass defaults to the full constructor
-        //only for testing
-        this(
-            "127.0.0.1",
-            6667,
-            "root",
-            "root",
-            "root.devdb",
-            "tcp://127.0.0.1",
-            1883,
-            new String[]{
-                "/+/+/CO2",
-                "/+/+/temperature",
-                "/+/+/humidity"
-            });
     }
 
     public static void main(String[] args) throws IoTDBConnectionException, StatementExecutionException, MqttException, IOException {
@@ -204,11 +209,11 @@ public class Pump implements MqttCallback {
     private void connectToIotDb() throws IoTDBConnectionException, StatementExecutionException {
 
         dbsession = new Session.Builder()
-            .host(this.dbhost)
-            .port(this.dbport)
-            .username(this.dbusername)
-            .password(this.dbpassword)
-            .build();
+                .host(this.dbhost)
+                .port(this.dbport)
+                .username(this.dbusername)
+                .password(this.dbpassword)
+                .build();
         dbsession.open();
     }
 
@@ -218,9 +223,9 @@ public class Pump implements MqttCallback {
         mqttclient.setCallback(this);
 
         MqttConnectionOptions options = new MqttConnectionOptionsBuilder()
-            .cleanStart(true)
-            .automaticReconnect(true)
-            .build();
+                .cleanStart(true)
+                .automaticReconnect(true)
+                .build();
 
         mqttclient.connect(options);
 
@@ -276,9 +281,7 @@ public class Pump implements MqttCallback {
         try {
             dbsession.insertRecord(tsval.getPrefix(), date.getTime(), measurements, types, values);
             System.out.println("Posted in: " + tsval.timeseries + " value: " + values.get(0));
-        } catch (IoTDBConnectionException ex) {
-            Logger.getLogger(Pump.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (StatementExecutionException ex) {
+        } catch (IoTDBConnectionException | StatementExecutionException ex) {
             Logger.getLogger(Pump.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

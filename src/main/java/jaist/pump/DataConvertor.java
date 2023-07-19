@@ -9,7 +9,7 @@ import org.apache.iotdb.tsfile.utils.Binary;
  */
 public abstract class DataConvertor {
 
-    private TSDataType type;
+    private final TSDataType type;
 
     public TSDataType getPrimitiveType() {
         return this.type;
@@ -20,19 +20,19 @@ public abstract class DataConvertor {
     }
 
     public abstract Object parseValue(String value_str) throws IllegalArgumentException;
-    
+
     public static DataConvertor Boolean() {
         return new DataConvertor.AsBoolean();
     }
-    
+
     public static DataConvertor Float() {
         return new DataConvertor.AsFloat();
     }
-    
+
     public static DataConvertor Int32() {
         return new DataConvertor.AsInt32();
     }
-    
+
     public static DataConvertor Text() {
         return new DataConvertor.AsText();
     }
@@ -97,6 +97,6 @@ public abstract class DataConvertor {
             return new Binary(value_str);
         }
     }
-    
+
     //TODO let's do the rest of the types when we actually need them :)
 }
