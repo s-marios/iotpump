@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import static java.util.Map.entry;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,7 +43,6 @@ public class Pump implements MqttCallback {
     private MqttClient mqttclient;
 
     private final List<TopicAndMessage> messages;
-    private final Map<String, DataConvertor> conversions;
 
     final String dbhost;
     final int dbport;
@@ -57,18 +54,18 @@ public class Pump implements MqttCallback {
     private final String dbpassword;
 
     public static String default_topics = String.join(",",
-            "/+/+/CO2",
-            "/+/+/temperature",
-            "/+/+/humidity",
-            "/+/+/VOC",
-            "/+/+/NOx",
-            "/+/+/PM1",
-            "/+/+/PM2.5",
-            "/+/+/PM4",
-            "/+/+/PM10",
-            "/+/+/lux",
-            "/+/+/presence",
-            "/+/+/button");
+        "/+/+/CO2",
+        "/+/+/temperature",
+        "/+/+/humidity",
+        "/+/+/VOC",
+        "/+/+/NOx",
+        "/+/+/PM1",
+        "/+/+/PM2.5",
+        "/+/+/PM4",
+        "/+/+/PM10",
+        "/+/+/lux",
+        "/+/+/presence",
+        "/+/+/button");
 
     public static class Builder {
 
@@ -174,20 +171,7 @@ public class Pump implements MqttCallback {
         this.topics = topics;
 
         this.messages = Collections.synchronizedList(new ArrayList<>());
-        this.conversions = Map.ofEntries(
-                entry("temperature", DataConvertor.Float()),
-                entry("humidity", DataConvertor.Float()),
-                entry("co2", DataConvertor.Float()),
-                entry("voc", DataConvertor.Float()),
-                entry("nox", DataConvertor.Float()),
-                entry("pm1", DataConvertor.Float()),
-                entry("pm2.5", DataConvertor.Float()),
-                entry("pm4", DataConvertor.Float()),
-                entry("pm10", DataConvertor.Float()),
-                entry("lux", DataConvertor.Float()),
-                entry("presence", DataConvertor.Int32()),
-                entry("button", DataConvertor.Int32())
-        );
+
     }
 
     public static void main(String[] args) throws IoTDBConnectionException, StatementExecutionException, MqttException, IOException {
@@ -209,11 +193,11 @@ public class Pump implements MqttCallback {
     private void connectToIotDb() throws IoTDBConnectionException, StatementExecutionException {
 
         dbsession = new Session.Builder()
-                .host(this.dbhost)
-                .port(this.dbport)
-                .username(this.dbusername)
-                .password(this.dbpassword)
-                .build();
+            .host(this.dbhost)
+            .port(this.dbport)
+            .username(this.dbusername)
+            .password(this.dbpassword)
+            .build();
         dbsession.open();
     }
 
@@ -223,9 +207,9 @@ public class Pump implements MqttCallback {
         mqttclient.setCallback(this);
 
         MqttConnectionOptions options = new MqttConnectionOptionsBuilder()
-                .cleanStart(true)
-                .automaticReconnect(true)
-                .build();
+            .cleanStart(true)
+            .automaticReconnect(true)
+            .build();
 
         mqttclient.connect(options);
 
@@ -259,17 +243,22 @@ public class Pump implements MqttCallback {
 
     private TimeSeriesAndValue convertMessage(TopicAndMessage message) {
         String timeseries = convertTopicToTimeseries(message.topic);
-        String datatype = getTopicSuffix(message.topic).toLowerCase();
-        DataConvertor convertor = conversions.get(datatype);
+        DataConvertor convertor = Conversions.get(getTopicSuffix(message.topic));
         Object parseValue = convertor.parseValue(message.message.toString());
         return new TimeSeriesAndValue(timeseries, convertor.getPrimitiveType(), parseValue);
     }
 
-    private String convertTopicToTimeseries(String topic) {
-        return this.dbname + topic.replace('/', '.');
+    //we convert an MQTT topic by
+    // 1. replacing any dots with undrescores (dots add an extra level in an IoTDB dataseries
+    // 2. replacing MQTT level separators ('/') with IoTDB level separators ('.')
+    // 3. prepend the configured db/timeseries prefix
+    //package private just for testing
+    String convertTopicToTimeseries(String topic) {
+        return this.dbname + topic.replace('.', '_').replace('/', '.');
     }
 
-    private String getTopicSuffix(String mqtttopic) {
+    //package private just for testing
+    String getTopicSuffix(String mqtttopic) {
         return mqtttopic.substring(mqtttopic.lastIndexOf('/') + 1);
     }
 

@@ -1,12 +1,13 @@
 package jaist.pump;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
@@ -14,8 +15,12 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class PumpTest {
 
-    public PumpTest() {
+    private final Pump uninit_pump;
 
+    public PumpTest() throws FileNotFoundException, IOException {
+        Properties props = new Properties();
+        props.load(new FileInputStream("config_example.properties"));
+        uninit_pump = new Pump.Builder().fromProperties(props);
     }
 
     @Test
@@ -52,6 +57,19 @@ public class PumpTest {
         for (int i = 0; i < pump.topics.length; i++) {
             assertEquals(expectedTopics[i], pump.topics[i]);
         }
+    }
+
+    @Test
+    public void getTopicSuffixWorks() throws FileNotFoundException, IOException {
+        assertEquals("PM2.5", uninit_pump.getTopicSuffix("/test/topic/PM2.5"));
+        assertEquals("a", uninit_pump.getTopicSuffix("/a"));
+        assertEquals("", uninit_pump.getTopicSuffix("/"));
+    }
+
+    @Test
+    public void convertTopicToTimeseriesWithDotsWorks() throws FileNotFoundException, IOException {
+        assertEquals("root.devdb.test.topic.PM2_5", uninit_pump.convertTopicToTimeseries("/test/topic/PM2.5"));
+        assertEquals("root.devdb.t_e_s_t.t_o_p_i_c.P_M_2_5_", uninit_pump.convertTopicToTimeseries("/t.e.s.t/t.o.p.i.c/P.M.2.5."));
     }
 
 }
