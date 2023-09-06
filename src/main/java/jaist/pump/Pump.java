@@ -224,7 +224,9 @@ public class Pump implements MqttCallback {
     private void handleIncomingMessages() {
         TopicAndMessage tm = getMessage();
         TimeSeriesAndValue tsval = convertMessage(tm);
-        postToDB(tsval);
+        if (tsval != null) {
+            postToDB(tsval);
+        }
     }
 
     private TopicAndMessage getMessage() {
@@ -244,8 +246,14 @@ public class Pump implements MqttCallback {
     private TimeSeriesAndValue convertMessage(TopicAndMessage message) {
         String timeseries = convertTopicToTimeseries(message.topic);
         DataConvertor convertor = Conversions.get(getTopicSuffix(message.topic));
-        Object parseValue = convertor.parseValue(message.message.toString());
-        return new TimeSeriesAndValue(timeseries, convertor.getPrimitiveType(), parseValue);
+        try {
+            Object parseValue = convertor.parseValue(message.message.toString());
+            return new TimeSeriesAndValue(timeseries, convertor.getPrimitiveType(), parseValue);
+        } catch (IllegalArgumentException ex) {
+            Logger.getLogger(Pump.class.getName()).log(
+                Level.WARNING, "failed to convert value: " + message.message.toString(), ex);
+            return null;
+        }
     }
 
     //we convert an MQTT topic by
