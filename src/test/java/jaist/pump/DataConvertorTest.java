@@ -2,12 +2,12 @@ package jaist.pump;
 
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 import org.apache.iotdb.tsfile.utils.Binary;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  *
@@ -91,6 +91,18 @@ public class DataConvertorTest {
         DataConvertor expResult = new DataConvertor.AsInt32();
         DataConvertor result = DataConvertor.Int32();
         assertEquals(expResult.getClass(), result.getClass());
+    }
+
+    @Test
+    public void testInt32parsesFloatString() {
+        DataConvertor dc = DataConvertor.Int32();
+        Object parsed = dc.parseValue("1.00");
+        assertEquals(1, parsed);
+        parsed = dc.parseValue("1.01");
+        assertEquals(1, parsed);
+        parsed = dc.parseValue("0.99");
+        assertEquals(1, parsed);
+
     }
 
     /**

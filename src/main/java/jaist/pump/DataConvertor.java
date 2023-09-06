@@ -81,7 +81,7 @@ public abstract class DataConvertor {
 
         @Override
         public Object parseValue(String value_str) throws IllegalArgumentException {
-            return Integer.valueOf(value_str);
+            return Math.round(Float.parseFloat(value_str));
         }
 
     }
