@@ -38,6 +38,7 @@ public class Pump implements MqttCallback {
     static final String MQTTSERVER_KEY = "MQTTSERVER";
     static final String MQTTPORT_KEY = "MQTTPORT";
     static final String MQTTTOPICS_KEY = "MQTTTOPICS";
+    static final String MQTTCLIENTID_KEY = "MQTTCLIENTID";
 
     private Session dbsession;
     private MqttClient mqttclient;
@@ -52,6 +53,7 @@ public class Pump implements MqttCallback {
     String[] topics;
     private final String dbusername;
     private final String dbpassword;
+    final String mqttClientId;
 
     public static String default_topics = String.join(",",
         "/+/+/CO2",
@@ -77,6 +79,7 @@ public class Pump implements MqttCallback {
         private String mqttServerUri = "tcp://localhost";
         private int mqttPort = 1883;
         private String topics = default_topics;
+        private String mqttClientId = "iotpump-persistence";
 
         public Builder() {
         }
@@ -121,6 +124,11 @@ public class Pump implements MqttCallback {
             return this;
         }
 
+        public Builder mqttClientId(String id) {
+            this.mqttClientId = id;
+            return this;
+        }
+
         public Pump build() {
             //this is horrible, the use of java arrays
             //when comming from rust it'd be
@@ -131,7 +139,7 @@ public class Pump implements MqttCallback {
                 scrubbed_topics[i] = splits[i].strip();
             }
 
-            return new Pump(dbhost, dbport, dbusername, dbpassword, dbname, mqttServerUri, mqttPort, scrubbed_topics);
+            return new Pump(dbhost, dbport, dbusername, dbpassword, dbname, mqttServerUri, mqttPort, scrubbed_topics, mqttClientId);
         }
 
         public Pump fromProperties(Properties properties) {
@@ -143,6 +151,7 @@ public class Pump implements MqttCallback {
 
             this.mqttServerUri(properties.getProperty(MQTTSERVER_KEY, mqttServerUri));
             this.topics(properties.getProperty(MQTTTOPICS_KEY, topics));
+            this.mqttClientId(properties.getProperty(MQTTCLIENTID_KEY, this.mqttClientId));
 
             try {
                 this.dbport(Integer.parseInt(properties.getProperty(DBPORT_KEY)));
@@ -160,7 +169,7 @@ public class Pump implements MqttCallback {
         }
     }
 
-    public Pump(String dbhost, int dbport, String dbusername, String dbpassword, String dbname, String mqttServerUri, int mqttPort, String[] topics) {
+    public Pump(String dbhost, int dbport, String dbusername, String dbpassword, String dbname, String mqttServerUri, int mqttPort, String[] topics, String mqttClientId) {
         this.dbhost = dbhost;
         this.dbport = dbport;
         this.dbusername = dbusername;
@@ -169,6 +178,7 @@ public class Pump implements MqttCallback {
         this.mqttServerUri = mqttServerUri;
         this.mqttport = mqttPort;
         this.topics = topics;
+        this.mqttClientId = mqttClientId;
 
         this.messages = Collections.synchronizedList(new ArrayList<>());
 
@@ -203,7 +213,7 @@ public class Pump implements MqttCallback {
 
     private void startMqttClient() throws MqttException {
 
-        mqttclient = new MqttClient(this.mqttServerUri, "iotpump-persistence");
+        mqttclient = new MqttClient(this.mqttServerUri, this.mqttClientId);
         mqttclient.setCallback(this);
 
         MqttConnectionOptions options = new MqttConnectionOptionsBuilder()

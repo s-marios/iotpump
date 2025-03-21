@@ -57,6 +57,8 @@ public class PumpTest {
         for (int i = 0; i < pump.topics.length; i++) {
             assertEquals(expectedTopics[i], pump.topics[i]);
         }
+
+        assertEquals("client_id", pump.mqttClientId);
     }
 
     @Test
