@@ -39,7 +39,6 @@ public class DataConvertorTest {
      */
     @Test
     public void testGetPrimitiveType() {
-        System.out.println("getPrimitiveType");
         DataConvertor instance = new DataConvertor.AsBoolean();
         TSDataType expResult = TSDataType.BOOLEAN;
         TSDataType result = instance.getPrimitiveType();
@@ -51,7 +50,6 @@ public class DataConvertorTest {
      */
     @Test
     public void testParseValue() {
-        System.out.println("parseValue");
         String value_str = "test string";
         DataConvertor instance = new DataConvertor.AsText();
         Object expResult = new Binary("test string".getBytes());
@@ -64,7 +62,6 @@ public class DataConvertorTest {
      */
     @Test
     public void testBoolean() {
-        System.out.println("Boolean");
         DataConvertor expResult = new DataConvertor.AsBoolean();
         DataConvertor result = DataConvertor.Boolean();
         assertEquals(expResult.getClass(), result.getClass());
@@ -76,7 +73,6 @@ public class DataConvertorTest {
      */
     @Test
     public void testFloat() {
-        System.out.println("Float");
         DataConvertor expResult = new DataConvertor.AsFloat();
         DataConvertor result = DataConvertor.Float();
         assertEquals(expResult.getClass(), result.getClass());
@@ -87,7 +83,6 @@ public class DataConvertorTest {
      */
     @Test
     public void testInt32() {
-        System.out.println("Int32");
         DataConvertor expResult = new DataConvertor.AsInt32();
         DataConvertor result = DataConvertor.Int32();
         assertEquals(expResult.getClass(), result.getClass());
@@ -110,10 +105,28 @@ public class DataConvertorTest {
      */
     @Test
     public void testText() {
-        System.out.println("Text");
         DataConvertor expResult = new DataConvertor.AsText();
         DataConvertor result = DataConvertor.Text();
         assertEquals(expResult.getClass(), result.getClass());
+    }
+
+    @Test
+    public void testDoubleOrTextparsesTwoTypesSuccessfully() {
+        DataConvertor conv = DataConvertor.DoubleOrText();
+        Double parseValue = (Double) conv.parseValue("1");
+        assertEquals(Double.valueOf(1), parseValue);
+        assertEquals(TSDataType.DOUBLE, conv.getPrimitiveType());
+        String input = "notdouble";
+        Binary parsestring = (Binary) conv.parseValue(input);
+        assertEquals(parsestring.toString(), input);
+        assertEquals(TSDataType.TEXT, conv.getPrimitiveType());
+        parseValue = (Double) conv.parseValue("2");
+        assertEquals(Double.valueOf(2), parseValue);
+        assertEquals(TSDataType.DOUBLE, conv.getPrimitiveType());
+        input = "stillnotdouble";
+        parsestring = (Binary) conv.parseValue(input);
+        assertEquals(parsestring.toString(), input);
+        assertEquals(TSDataType.TEXT, conv.getPrimitiveType());
     }
 
 }

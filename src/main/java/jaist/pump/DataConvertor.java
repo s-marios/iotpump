@@ -9,7 +9,7 @@ import org.apache.tsfile.utils.Binary;
  */
 public abstract class DataConvertor {
 
-    private final TSDataType type;
+    protected TSDataType type;
 
     public TSDataType getPrimitiveType() {
         return this.type;
@@ -39,6 +39,10 @@ public abstract class DataConvertor {
 
     public static DataConvertor Text() {
         return new DataConvertor.AsText();
+    }
+
+    public static DataConvertor DoubleOrText() {
+        return new DataConvertor.AsDoubleOrText();
     }
 
     public static class AsBoolean extends DataConvertor {
@@ -114,5 +118,22 @@ public abstract class DataConvertor {
         }
     }
 
-    //TODO let's do the rest of the types when we actually need them :)
+    public static class AsDoubleOrText extends DataConvertor {
+
+        public AsDoubleOrText() {
+            super(TSDataType.DOUBLE);
+        }
+
+        @Override
+        public Object parseValue(String value_str) throws IllegalArgumentException {
+            try {
+                this.type = TSDataType.DOUBLE;
+                return Double.valueOf(value_str);
+            } catch (NumberFormatException e) {
+                this.type = TSDataType.TEXT;
+                return new Binary(value_str.getBytes());
+            }
+        }
+
+    }
 }
