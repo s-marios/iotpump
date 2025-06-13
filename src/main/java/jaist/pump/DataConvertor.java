@@ -29,6 +29,10 @@ public abstract class DataConvertor {
         return new DataConvertor.AsFloat();
     }
 
+    public static DataConvertor Double() {
+        return new DataConvertor.AsDouble();
+    }
+
     public static DataConvertor Int32() {
         return new DataConvertor.AsInt32();
     }
@@ -70,6 +74,18 @@ public abstract class DataConvertor {
         @Override
         public Object parseValue(String value_str) throws IllegalArgumentException {
             return Float.valueOf(value_str);
+        }
+    }
+
+    public static class AsDouble extends DataConvertor {
+
+        public AsDouble() {
+            super(TSDataType.DOUBLE);
+        }
+
+        @Override
+        public Object parseValue(String value_str) throws IllegalArgumentException {
+            return Double.valueOf(value_str);
         }
     }
 
