@@ -1,7 +1,7 @@
 package jaist.pump;
 
-import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
-import org.apache.iotdb.tsfile.utils.Binary;
+import org.apache.tsfile.enums.TSDataType;
+import org.apache.tsfile.utils.Binary;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
@@ -54,7 +54,7 @@ public class DataConvertorTest {
         System.out.println("parseValue");
         String value_str = "test string";
         DataConvertor instance = new DataConvertor.AsText();
-        Object expResult = new Binary("test string");
+        Object expResult = new Binary("test string".getBytes());
         Object result = instance.parseValue(value_str);
         assertEquals(expResult, result);
     }

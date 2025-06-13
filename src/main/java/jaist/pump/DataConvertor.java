@@ -1,7 +1,7 @@
 package jaist.pump;
 
-import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
-import org.apache.iotdb.tsfile.utils.Binary;
+import org.apache.tsfile.enums.TSDataType;
+import org.apache.tsfile.utils.Binary;
 
 /**
  *
@@ -110,7 +110,7 @@ public abstract class DataConvertor {
 
         @Override
         public Object parseValue(String value_str) throws IllegalArgumentException {
-            return new Binary(value_str);
+            return new Binary(value_str.getBytes());
         }
     }
 

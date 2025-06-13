@@ -1,11 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/JUnit5TestClass.java to edit this template
- */
 package jaist.pump;
 
-import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
-import org.apache.iotdb.tsfile.utils.Binary;
+import org.apache.tsfile.enums.TSDataType;
+import org.apache.tsfile.utils.Binary;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,22 +13,22 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author smarios <smarios@jaist.ac.jp>
  */
 public class TimeSeriesAndValueTest {
-    
+
     public TimeSeriesAndValueTest() {
     }
-    
+
     @BeforeAll
     public static void setUpClass() {
     }
-    
+
     @AfterAll
     public static void tearDownClass() {
     }
-    
+
     @BeforeEach
     public void setUp() {
     }
-    
+
     @AfterEach
     public void tearDown() {
     }
@@ -43,11 +39,11 @@ public class TimeSeriesAndValueTest {
     @org.junit.jupiter.api.Test
     public void testGetDataTypeForText() {
         System.out.println("getDataType");
-        TimeSeriesAndValue instance = new TimeSeriesAndValue("ignore", TSDataType.TEXT, new Binary("text"));
+        TimeSeriesAndValue instance = new TimeSeriesAndValue("ignore", TSDataType.TEXT, new Binary("text".getBytes()));
         TSDataType expResult = TSDataType.TEXT;
         TSDataType result = instance.getDataType();
         assertEquals(expResult, result);
-        assertEquals(new Binary("text"), instance.getValue());
+        assertEquals(new Binary("text".getBytes()), instance.getValue());
     }
 
     /**
@@ -68,7 +64,7 @@ public class TimeSeriesAndValueTest {
     @org.junit.jupiter.api.Test
     public void testGetSuffix() {
         System.out.println("getSuffix");
-        TimeSeriesAndValue instance = new TimeSeriesAndValue("root.somewhere.src1.temperature", TSDataType.TEXT, new Binary("ignore"));
+        TimeSeriesAndValue instance = new TimeSeriesAndValue("root.somewhere.src1.temperature", TSDataType.TEXT, new Binary("ignore".getBytes()));
         String expResult = "temperature";
         String result = instance.getSuffix();
         assertEquals(expResult, result);
@@ -80,10 +76,10 @@ public class TimeSeriesAndValueTest {
     @org.junit.jupiter.api.Test
     public void testGetPrefix() {
         System.out.println("getPrefix");
-        TimeSeriesAndValue instance = new TimeSeriesAndValue("root.somewhere.src1.temperature", TSDataType.TEXT, new Binary("ignore"));
+        TimeSeriesAndValue instance = new TimeSeriesAndValue("root.somewhere.src1.temperature", TSDataType.TEXT, new Binary("ignore".getBytes()));
         String expResult = "root.somewhere.src1";
         String result = instance.getPrefix();
         assertEquals(expResult, result);
     }
-    
+
 }

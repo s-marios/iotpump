@@ -1,6 +1,6 @@
 package jaist.pump;
 
-import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
+import org.apache.tsfile.enums.TSDataType;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 

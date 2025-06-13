@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
-import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
+import org.apache.tsfile.enums.TSDataType;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
 import org.eclipse.paho.mqttv5.client.MqttCallback;
 import org.eclipse.paho.mqttv5.client.MqttClient;
