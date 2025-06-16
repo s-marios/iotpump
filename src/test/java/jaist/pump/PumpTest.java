@@ -17,6 +17,20 @@ public class PumpTest {
 
     private final Pump uninit_pump;
 
+    private static String default_topics = String.join(",",
+        "/+/+/CO2",
+        "/+/+/temperature",
+        "/+/+/humidity",
+        "/+/+/VOC",
+        "/+/+/NOx",
+        "/+/+/PM1",
+        "/+/+/PM2.5",
+        "/+/+/PM4",
+        "/+/+/PM10",
+        "/+/+/lux",
+        "/+/+/presence",
+        "/+/+/button");
+
     public PumpTest() throws FileNotFoundException, IOException {
         Properties props = new Properties();
         props.load(new FileInputStream("config_example.properties"));
@@ -31,7 +45,7 @@ public class PumpTest {
             props.load(new FileInputStream("config_example.properties"));
             assertEquals("6667", props.getProperty("DBPORT"));
             assertEquals("tcp://127.0.0.1", props.getProperty("MQTTSERVER"));
-            assertEquals(Pump.default_topics, props.getProperty("MQTTTOPICS"));
+            assertEquals(default_topics, props.getProperty("MQTTTOPICS"));
         } catch (IOException ex) {
             Logger.getLogger(PumpTest.class.getName()).log(Level.SEVERE, null, ex);
             fail();
@@ -78,7 +92,7 @@ public class PumpTest {
         assertEquals("tcp://127.0.0.1", pump.mqttServerUri);
         assertEquals(1883, pump.mqttport);
 
-        String[] expectedTopics = Pump.default_topics.split(",");
+        String[] expectedTopics = default_topics.split(",");
 
         assertEquals(expectedTopics.length, pump.topics.length);
 
@@ -102,4 +116,13 @@ public class PumpTest {
         assertEquals("root.devdb.t_e_s_t.t_o_p_i_c.P_M_2_5_", uninit_pump.convertTopicToTimeseries("/t.e.s.t/t.o.p.i.c/P.M.2.5."));
     }
 
+    @Test
+    public void NoTopicConfigurationThrows() {
+        try {
+            new Pump.Builder().build();
+            fail("did not throw!");
+        } catch (IllegalArgumentException ex) {
+            //expected
+        }
+    }
 }

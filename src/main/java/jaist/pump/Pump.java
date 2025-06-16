@@ -65,20 +65,6 @@ public class Pump implements MqttCallback {
     private final Map<String, DataConvertor> conversions;
     private final DataConvertor defaultConvertor = DataConvertor.DoubleOrText();
 
-    public static String default_topics = String.join(",",
-        "/+/+/CO2",
-        "/+/+/temperature",
-        "/+/+/humidity",
-        "/+/+/VOC",
-        "/+/+/NOx",
-        "/+/+/PM1",
-        "/+/+/PM2.5",
-        "/+/+/PM4",
-        "/+/+/PM10",
-        "/+/+/lux",
-        "/+/+/presence",
-        "/+/+/button");
-
     public static class Builder {
 
         private String dbname = "root.devdb";
@@ -88,7 +74,7 @@ public class Pump implements MqttCallback {
         private String dbpassword = "root";
         private String mqttServerUri = "tcp://localhost";
         private int mqttPort = 1883;
-        private String topics = default_topics;
+        private String topics = null;
         private String mqttClientId = "iotpump-persistence";
         private final Map<String, DataConvertor> conversions = new HashMap<>();
 
@@ -141,6 +127,9 @@ public class Pump implements MqttCallback {
         }
 
         public Pump build() {
+            if (this.topics == null) {
+                throw new IllegalArgumentException("no valid topics configuration!");
+            }
             //this is horrible, the use of java arrays
             //when comming from rust it'd be
             //topics.split.map(strip).collect() and go to town
