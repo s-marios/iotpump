@@ -178,13 +178,13 @@ public class Pump implements MqttCallback {
             try {
                 this.dbport(Integer.parseInt(properties.getProperty(DBPORT_KEY)));
             } catch (NumberFormatException | NullPointerException ex) {
-                Logger.getLogger(Builder.class.getName()).log(Level.WARNING, "malformed or non-existing configuration: DBPORT", ex);
+                Logger.getLogger(Builder.class.getName()).log(Level.WARNING, "malformed or non-existing configuration: DBPORT, using default port: " + this.dbport, ex);
             }
 
             try {
                 this.mqttPort(Integer.parseInt(properties.getProperty(MQTTPORT_KEY)));
             } catch (NumberFormatException | NullPointerException ex) {
-                Logger.getLogger(Builder.class.getName()).log(Level.WARNING, "malformed or non-existing configuration: MQTTPORT", ex);
+                Logger.getLogger(Builder.class.getName()).log(Level.WARNING, "malformed or non-existing configuration: MQTTPORT, using default port: " + this.mqttPort, ex);
             }
 
             this.loadConvertors(properties);
