@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,6 +42,12 @@ public class Pump implements MqttCallback {
     static final String MQTTTOPICS_KEY = "MQTTTOPICS";
     static final String MQTTCLIENTID_KEY = "MQTTCLIENTID";
 
+    static final String CONV_BOOL_KEY = "CONVERT-BOOL";
+    static final String CONV_INT_KEY = "CONVERT-INT";
+    static final String CONV_FLOAT_KEY = "CONVERT-FLOAT";
+    static final String CONV_DOUBLE_KEY = "CONVERT-DOUBLE";
+    static final String CONV_TEXT_KEY = "CONVERT-TEXT";
+
     private Session dbsession;
     private MqttClient mqttclient;
 
@@ -54,6 +62,8 @@ public class Pump implements MqttCallback {
     private final String dbusername;
     private final String dbpassword;
     final String mqttClientId;
+    private final Map<String, DataConvertor> conversions;
+    private final DataConvertor defaultConvertor = DataConvertor.DoubleOrText();
 
     public static String default_topics = String.join(",",
         "/+/+/CO2",
@@ -80,6 +90,7 @@ public class Pump implements MqttCallback {
         private int mqttPort = 1883;
         private String topics = default_topics;
         private String mqttClientId = "iotpump-persistence";
+        private final Map<String, DataConvertor> conversions = new HashMap<>();
 
         public Builder() {
         }
@@ -139,7 +150,29 @@ public class Pump implements MqttCallback {
                 scrubbed_topics[i] = splits[i].strip();
             }
 
-            return new Pump(dbhost, dbport, dbusername, dbpassword, dbname, mqttServerUri, mqttPort, scrubbed_topics, mqttClientId);
+            return new Pump(dbhost, dbport, dbusername, dbpassword, dbname, mqttServerUri, mqttPort, scrubbed_topics, mqttClientId, conversions);
+        }
+
+        private void loadConvertor(Properties properties, String key, DataConvertor convertor) {
+            var prop = properties.getProperty(key);
+            if (prop == null) {
+                return;
+            }
+
+            String[] splits = prop.split(",");
+            for (var split : splits) {
+                conversions.put(split.strip().toLowerCase(), convertor);
+            }
+
+        }
+
+        private Map<String, DataConvertor> loadConvertors(Properties properties) {
+            loadConvertor(properties, CONV_FLOAT_KEY, DataConvertor.Float());
+            loadConvertor(properties, CONV_DOUBLE_KEY, DataConvertor.Double());
+            loadConvertor(properties, CONV_INT_KEY, DataConvertor.Int32());
+            loadConvertor(properties, CONV_TEXT_KEY, DataConvertor.Text());
+            loadConvertor(properties, CONV_BOOL_KEY, DataConvertor.Boolean());
+            return this.conversions;
         }
 
         public Pump fromProperties(Properties properties) {
@@ -165,11 +198,13 @@ public class Pump implements MqttCallback {
                 Logger.getLogger(Builder.class.getName()).log(Level.WARNING, "malformed or non-existing configuration: MQTTPORT", ex);
             }
 
+            this.loadConvertors(properties);
+
             return this.build();
         }
     }
 
-    public Pump(String dbhost, int dbport, String dbusername, String dbpassword, String dbname, String mqttServerUri, int mqttPort, String[] topics, String mqttClientId) {
+    public Pump(String dbhost, int dbport, String dbusername, String dbpassword, String dbname, String mqttServerUri, int mqttPort, String[] topics, String mqttClientId, Map<String, DataConvertor> conversions) {
         this.dbhost = dbhost;
         this.dbport = dbport;
         this.dbusername = dbusername;
@@ -179,6 +214,7 @@ public class Pump implements MqttCallback {
         this.mqttport = mqttPort;
         this.topics = topics;
         this.mqttClientId = mqttClientId;
+        this.conversions = conversions;
 
         this.messages = Collections.synchronizedList(new ArrayList<>());
 
@@ -255,7 +291,7 @@ public class Pump implements MqttCallback {
 
     private TimeSeriesAndValue convertMessage(TopicAndMessage message) {
         String timeseries = convertTopicToTimeseries(message.topic);
-        DataConvertor convertor = Conversions.get(getTopicSuffix(message.topic));
+        DataConvertor convertor = getConvertor(getTopicSuffix(message.topic));
         try {
             Object parseValue = convertor.parseValue(message.message.toString());
             return new TimeSeriesAndValue(timeseries, convertor.getPrimitiveType(), parseValue);
@@ -264,6 +300,11 @@ public class Pump implements MqttCallback {
                 Level.WARNING, "failed to convert value: " + message.message.toString(), ex);
             return null;
         }
+    }
+
+    //package private for testing
+    DataConvertor getConvertor(String key) {
+        return conversions.getOrDefault(key.toLowerCase(), defaultConvertor);
     }
 
     //we convert an MQTT topic by

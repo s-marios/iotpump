@@ -39,6 +39,34 @@ public class PumpTest {
     }
 
     @Test
+    public void testLoadPropertiesExplicitConvertors() {
+        Properties props = new Properties();
+        try {
+            props.load(new FileInputStream("config_test.properties"));
+            var builder = new Pump.Builder();
+            Pump pump = builder.fromProperties(props);
+
+            var float_convs = "CO2, temperature, humidity, VOC, NOx, PM1, PM2.5, PM4, PM10, lux";
+            for (var key : float_convs.split(",")) {
+                assertEquals(DataConvertor.Float().getClass(), pump.getConvertor(key.strip()).getClass());
+            }
+
+            var bool_convs = "presence, button";
+            for (var key : bool_convs.split(",")) {
+                assertEquals(DataConvertor.Boolean().getClass(), pump.getConvertor(key.strip()).getClass());
+            }
+
+            assertEquals(DataConvertor.Double().getClass(), pump.getConvertor("todouble").getClass());
+            assertEquals(DataConvertor.Text().getClass(), pump.getConvertor("totext").getClass());
+            assertEquals(DataConvertor.Int32().getClass(), pump.getConvertor("toint32").getClass());
+
+        } catch (IOException ex) {
+            fail("could not open the test configuration file");
+        }
+
+    }
+
+    @Test
     public void testBuilderFromProperties() throws IOException {
         Properties props = new Properties();
         props.load(new FileInputStream("config_example.properties"));
