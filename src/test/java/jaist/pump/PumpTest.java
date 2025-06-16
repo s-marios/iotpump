@@ -114,6 +114,7 @@ public class PumpTest {
     public void convertTopicToTimeseriesWithDotsWorks() throws FileNotFoundException, IOException {
         assertEquals("root.devdb.test.topic.PM2_5", uninit_pump.convertTopicToTimeseries("/test/topic/PM2.5"));
         assertEquals("root.devdb.t_e_s_t.t_o_p_i_c.P_M_2_5_", uninit_pump.convertTopicToTimeseries("/t.e.s.t/t.o.p.i.c/P.M.2.5."));
+        assertEquals("root.devdb.nostartingslash", uninit_pump.convertTopicToTimeseries("nostartingslash"));
     }
 
     @Test

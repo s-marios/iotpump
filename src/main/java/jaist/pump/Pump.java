@@ -302,6 +302,9 @@ public class Pump implements MqttCallback {
     // 3. prepend the configured db/timeseries prefix
     //package private just for testing
     String convertTopicToTimeseries(String topic) {
+        if (topic.startsWith("/") == false) {
+            topic = "/" + topic;
+        }
         return this.dbname + topic.replace('.', '_').replace('/', '.');
     }
 
