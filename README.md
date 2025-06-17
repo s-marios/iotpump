@@ -1,3 +1,10 @@
+Repository
+----------
+
+You can obtain a copy of this project using git:
+
+$ git clone http://tangit.jaist.ac.jp/git/iotpump.git
+
 Dist Setup
 ----------
 
