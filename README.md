@@ -3,7 +3,7 @@ Repository
 
 You can obtain a copy of this project using git:
 
-$ git clone http://tangit.jaist.ac.jp/git/iotpump.git
+$ git clone https://github.com/s-marios/iotpump.git
 
 Dist Setup
 ----------
